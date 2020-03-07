@@ -51,7 +51,7 @@ impl<T> List<T> {
 		Iter { next: self.head.as_ref().map(|node| &**node) }
 	}
 
-	pub fn iter_mut(&self) -> IterMut<'_, T> {
+	pub fn iter_mut(&mut self) -> IterMut<'_, T> {
 		IterMut { next: self.head.as_mut().map(|node| &mut **node) }
 	}
 
@@ -84,7 +84,7 @@ impl<'a,T> Iterator for IterMut<'a,T> {
 	type Item = &'a mut T;
 
 	fn next(&mut self) -> Option<Self::Item> {
-		self.next.map(|node| {
+		self.next.take().map(|node| {
 			self.next = node.next.as_mut().map(|node| &mut **node);
 			&mut node.elem
 		})
@@ -174,5 +174,20 @@ mod test {
 		assert_eq!(iter.next(), Some(&25));
 		assert_eq!(iter.next(), Some(&10));
 		assert_eq!(iter.next(), Some(&1));
+	}
+
+	#[test]
+	fn second_itermut() {
+		let mut list = List::new();
+		list.push(1); list.push(10); list.push(25);
+
+		let mut iter = list.iter_mut();
+		assert_eq!(iter.next(), Some(&mut 25));
+		assert_eq!(iter.next(), Some(&mut 10));
+
+		let mut last_element = iter.next().unwrap();
+		assert_eq!(last_element, &mut 1);
+
+		*last_element += 1;
 	}
 }
